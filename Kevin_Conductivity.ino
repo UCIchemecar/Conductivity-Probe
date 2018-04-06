@@ -96,7 +96,7 @@ void loop() {
     Serial.print("temp:");
     Serial.print(temperature);    //current temperature
     Serial.print("^C     EC:");
-    Serial.print("        Run Time: ");Serial.print(timeRun);Serial.print("         Inject Time: "); Serial.print(timeInject); Serial.print("       Final Time: ");Serial.println(timeFinal);
+
 
     float TempCoefficient=1.0+0.0185*(temperature-25.0);    //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.0185*(fTP-25.0));
     float CoefficientVolatge=(float)averageVoltage/TempCoefficient;
@@ -109,21 +109,22 @@ void loop() {
       else ECcurrent=5.3*CoefficientVolatge+2278;                           //10ms/cm<EC<20ms/cm
       ECcurrent/=1000;    //convert us/cm to ms/cm
       Serial.print(ECcurrent,3);  //two decimal
-      Serial.println("ms/cm");
+      Serial.print("ms/cm");
+      Serial.print("        Run Time: ");Serial.print(timeRun / 1000.0);Serial.print("         Inject Time: "); Serial.print(timeInject / 1000.0); Serial.print("       Final Time: ");Serial.println(timeFinal / 1000.0);
     }
   }
   if(ECcurrent > 3300){
     inject = false;
-  }else{
+  }else if(!inject){
     timeInject = millis();
     inject = true;
   }
   timeRun = millis();
   timeRun = timeRun - timeInject;
-  timeRun = timeRun / 1000.0;
+  timeRun = timeRun;
   if(inject && ECcurrent < 8 && !finish){
     timeFinal = millis;
-    timeFinal = timeFinal / 1000.0;
+    timeFinal = timeFinal;
     finish = true;
   }
 
