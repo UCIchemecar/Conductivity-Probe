@@ -126,7 +126,7 @@ void loop() {
     timeFinal = timeFinal / 1000.0;
     finish = true;
   }
-
+  
 }
 /*
 ch=0,let the DS18B20 start the convert;ch=1,MCU read the current temperature from the DS18B20.
