@@ -30,7 +30,7 @@ unsigned long AnalogValueTotal = 0;                  // the running total
 unsigned int AnalogAverage = 0,averageVoltage=0;                // the average
 unsigned long AnalogSampleTime,printTime,tempSampleTime, timeInject, timeRun, timeFinal;
 float temperature,ECcurrent;
-boolean inject;
+static boolean inject = false;
 static boolean finish = false;
 
 //Temperature chip i/o
@@ -96,7 +96,7 @@ void loop() {
     Serial.print("temp:");
     Serial.print(temperature);    //current temperature
     Serial.print("^C     EC:");
-    
+
 
     float TempCoefficient=1.0+0.0185*(temperature-25.0);    //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.0185*(fTP-25.0));
     float CoefficientVolatge=(float)averageVoltage/TempCoefficient;
@@ -113,21 +113,19 @@ void loop() {
       Serial.print("        Run Time: ");Serial.print(timeRun / 1000.0);Serial.print("         Inject Time: "); Serial.print(timeInject / 1000.0); Serial.print("       Final Time: ");Serial.println(timeFinal / 1000.0);
     }
   }
-  if(ECcurrent > 3300){
-    inject = false;
-  }else if(!inject){
-    timeInject = millis();
+  if(ECcurrent < 15 && !inject){
     inject = true;
+    timeInject = millis();
   }
   timeRun = millis();
   timeRun = timeRun - timeInject;
   timeRun = timeRun;
-  if(inject && ECcurrent < 8 && !finish){
-    timeFinal = millis;
+  if(inject && ECcurrent < 7.82 && !finish){
+    timeFinal = millis() - timeInject;
     timeFinal = timeFinal;
     finish = true;
   }
-  
+
 }
 /*
 ch=0,let the DS18B20 start the convert;ch=1,MCU read the current temperature from the DS18B20.
