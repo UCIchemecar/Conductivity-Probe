@@ -73,7 +73,7 @@ void loop() {
     index = 0;
     // calculate the average:
     AnalogAverage = AnalogValueTotal / numReadings;
-    
+
   }
   /*
    Every once in a while,MCU read the temperature from the DS18B20 and then let the DS18B20 start the convert.
