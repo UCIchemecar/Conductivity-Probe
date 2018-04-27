@@ -28,10 +28,9 @@ unsigned int readings[numReadings];      // the readings from the analog input
 byte index = 0;                  // the index of the current reading
 unsigned long AnalogValueTotal = 0;                  // the running total
 unsigned int AnalogAverage = 0,averageVoltage=0;                // the average
-unsigned long AnalogSampleTime,printTime,tempSampleTime, timeInject, timeRun, timeFinal;
+unsigned long AnalogSampleTime,printTime,tempSampleTime;
 float temperature,ECcurrent;
-static boolean inject = false;
-static boolean finish = false;
+
 
 //Temperature chip i/o
 OneWire ds(DS18B20_Pin);  // on digital pin 2
@@ -46,9 +45,14 @@ void setup() {
   AnalogSampleTime=millis();
   printTime=millis();
   tempSampleTime=millis();
+  pinMode(8, OUTPUT);
 }
 
 void loop() {
+  static unsigned long timeInject, timeRun, timeFinal;
+  static boolean inject = false;
+  static boolean finish = false;
+  static unsigned int injectCount, endCount;
   /*
    Every once in a while,sample the analog value and calculate the average.
   */
@@ -69,6 +73,7 @@ void loop() {
     index = 0;
     // calculate the average:
     AnalogAverage = AnalogValueTotal / numReadings;
+    
   }
   /*
    Every once in a while,MCU read the temperature from the DS18B20 and then let the DS18B20 start the convert.
@@ -111,19 +116,53 @@ void loop() {
       Serial.print(ECcurrent,3);  //two decimal
       Serial.print("ms/cm");
       Serial.print("        Run Time: ");Serial.print(timeRun / 1000.0);Serial.print("         Inject Time: "); Serial.print(timeInject / 1000.0); Serial.print("       Final Time: ");Serial.println(timeFinal / 1000.0);
+     // Serial.print("        Hi:");Serial.print(inject);
     }
-  }
-  if(ECcurrent < 15 && !inject){
-    inject = true;
-    timeInject = millis();
+    if(ECcurrent < 14.0 && !inject ){
+      if(injectCount == 0){
+         timeInject = millis();
+      }
+      if(injectCount < 5){
+       injectCount++;
+      }else{
+       inject = true;
+     }
+  }else if(!inject){
+    injectCount = 0;
   }
   timeRun = millis();
-  timeRun = timeRun - timeInject;
-  timeRun = timeRun;
-  if(inject && ECcurrent < 7.82 && !finish){
-    timeFinal = millis() - timeInject;
-    timeFinal = timeFinal;
-    finish = true;
+  if(inject && ECcurrent < 5.00 && !finish){
+    if(endCount == 0){
+      timeFinal = millis() - timeInject;
+    }
+    if(endCount < 6){
+      endCount++;
+    }else{
+      finish = true;
+    }
+  }else if(!finish){
+    endCount = 0;
+  }
+  }
+ // Serial.print("  Test:");Serial.print(ECcurrent);
+
+
+ //code for running the car
+ static unsigned long tCarStart; //Time the car starts moving
+ static unsigned long tRunTime; //Time the car has been moving
+ static boolean hasCarStart;
+
+ if(inject && analogRead(A3) > 200 && !hasCarStart){
+  tCarStart = millis();
+  hasCarStart = true;
+ }
+ if(hasCarStart){
+  tRunTime = millis() - tCarStart;
+ }
+  if(finish && tRunTime > timeFinal){
+    digitalWrite(8, LOW);
+  }else if (inject){
+    digitalWrite(8, HIGH);
   }
 
 }
